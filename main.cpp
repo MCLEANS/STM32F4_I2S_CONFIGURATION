@@ -15,6 +15,9 @@ int main(void) {
   /* Enable clock port RCC */
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
 
+  /* Enable data pin RCC */
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+
   /* Enable SPI RCC */
   RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
 
@@ -28,6 +31,19 @@ int main(void) {
 
   /* Select specific alternate function */
   GPIOB->AFR[1] |= (5<<8);
+
+
+  /* set I2S data pin to alternate function */
+  GPIOC->MODER &= ~GPIO_MODER_MODER3;
+  GPIOC->MODER |= GPIO_MODER_MODER3_1;
+
+  /* Select the specific alternate function */
+  GPIOC->AFR[0] |= (5<<12);
+
+  /* Set PIN to high speed */
+  GPIOC->MODER &= ~GPIO_OSPEEDER_OSPEEDR3;
+  GPIOC->MODER |= GPIO_OSPEEDER_OSPEEDR3_1;
+
 
   /* PLL clock source automatically set to HSI by Clock configuration driver */
   
@@ -57,12 +73,12 @@ int main(void) {
 
   /* Set the I2S Linear prescaler with a Value of 42 */
   SPI2->I2SPR &= ~SPI_I2SPR_I2SDIV;
-  SPI2->I2SPR |= 17;
+  SPI2->I2SPR |= 42;
 
   /* Set odd factor for the I2S prescaler */
   SPI2->I2SPR &= ~SPI_I2SPR_ODD;
 
-  /* Enable I2S mode */
+  /* Select I2S mode */
   SPI2->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
 
   /* Set I2S to master receive mode */
@@ -77,13 +93,6 @@ int main(void) {
 
   /* Enable SPI */
   SPI2->I2SCFGR |= SPI_I2SCFGR_I2SE;
-
-
-
-
-
-
-
 
   while(1){
   
