@@ -1,14 +1,12 @@
 #include "stm32f4xx.h"
 #include "clockconfig.h"
+#include "USART.h"
+#include <stdlib.h>
 
 custom_libraries::clock_config system_clock;
+custom_libraries::USART serial(USART1,GPIOB,7,6,9600);
 
-#define DFREQ 12000
-#define FS DFREQ
-#define DECIMATION 64
-#define I2S_FS ((FS*DECIMATION)/(16*2))
-
-uint16_t received_data;
+uint16_t received_data = 17;
 
 int main(void) {
   
@@ -25,19 +23,17 @@ int main(void) {
   /* Set clock pin to output Alternate Function */
   GPIOB->MODER &= ~GPIO_MODER_MODER10;
   GPIOB->MODER |= GPIO_MODER_MODER10_1;
-  /* Set GPIO SPEED to veery high */
-  GPIOB->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR10;
+  /* Set GPIO SPEED to very high */
   GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR10;
   /* Select specific alternate function */
   GPIOB->AFR[1] |= (5<<8);
   /* set I2S data pin to alternate function */
   GPIOC->MODER &= ~GPIO_MODER_MODER3;
   GPIOC->MODER |= GPIO_MODER_MODER3_1;
+  /* Set PIN to high speed */
+  GPIOC->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR3;
   /* Select the specific alternate function */
   GPIOC->AFR[0] |= (5<<12);
-   /* Set PIN to high speed */
-  GPIOC->MODER &= ~GPIO_OSPEEDER_OSPEEDR3;
-  GPIOC->MODER |= GPIO_OSPEEDER_OSPEEDR3_1;
 
   /* PLL clock source automatically set to HSI by Clock configuration driver */
   /* Select I2S clock source to PLLI2S */
@@ -46,22 +42,20 @@ int main(void) {
    * Configure the I2S Clock frequency
    * PLL I2S Clock output frequency is set at 86MHz
    */
-  
   /* Set PLLI2SN value to 258 */
   RCC->PLLI2SCFGR &= ~RCC_PLLI2SCFGR_PLLI2SN;
   RCC->PLLI2SCFGR |= (258 << 6);
-  
-
   /* Set PLLI2SR to 3 */
   RCC->PLLI2SCFGR &= ~RCC_PLLI2SCFGR_PLLI2SR;
   RCC->PLLI2SCFGR |= RCC_PLLI2SCFGR_PLLI2SR_0;
   RCC->PLLI2SCFGR |= RCC_PLLI2SCFGR_PLLI2SR_1;
-
   /* Enable PLLI2S */
   RCC->CR |= RCC_CR_PLLI2SON;
   /* Wait until PLLI2S is Enabled */
   while(!(RCC->CR & RCC_CR_PLLI2SRDY)){}
 
+  /* Disable I2S */
+  SPI2->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
   /* Set the I2S Linear prescaler with a Value of 42 */
   SPI2->I2SPR &= ~SPI_I2SPR_I2SDIV;
   SPI2->I2SPR |= 42;
@@ -72,21 +66,21 @@ int main(void) {
   /* Set I2S to master receive mode */
   SPI2->I2SCFGR |= SPI_I2SCFGR_I2SCFG;
   /* Set MSB Justified standard */
-  SPI2->I2SCFGR |= SPI_I2SCFGR_I2SSTD_1;
-  /* Set CPOL to 0 */
+  SPI2->I2SCFGR |= SPI_I2SCFGR_I2SSTD_0;
+  /* Set CPOL to LOW */
   SPI2->I2SCFGR &= ~SPI_I2SCFGR_CKPOL;
   /* Set data length to 16 bit */
   SPI2->I2SCFGR &= ~SPI_I2SCFGR_DATLEN;
-  /* Set to I2S master receive */
-  SPI2->I2SCFGR |= SPI_I2SCFGR_I2SCFG;
+  /* set channel length to 16 bits */
+  SPI2->I2SCFGR &= ~SPI_I2SCFGR_CHLEN;
   /* Enable RX DMA capability */
   SPI2->CR2 |= SPI_CR2_RXDMAEN;
-  /* Enable SPI */
+  /* Enable I2S */
   SPI2->I2SCFGR |= SPI_I2SCFGR_I2SE;
 
   /* Select stream 3 channel 0 of DMA */
-  DMA1_Stream3->CR &= ~DMA_SxCR_CHSEL;
-
+ // DMA1_Stream3->CR &= ~DMA_SxCR_CHSEL;
+/*
 	//set Memory data size to 16 bits
 	DMA1_Stream3->CR |= DMA_SxCR_MSIZE_0;
 	//Set peripheral data size to 16 bits
@@ -103,9 +97,19 @@ int main(void) {
 	DMA1_Stream3->M0AR = (uint32_t)(&received_data);
 	//Enable the DMA
 	DMA1_Stream3->CR |= DMA_SxCR_EN;
+*/
+  /* Initialize USART */
+  serial.initialize();
   
   while(1){
-  
-
+    char data[5];
+    while(!(SPI2->SR & SPI_SR_RXNE)){}
+    if(!(SPI2->SR & SPI_SR_CHSIDE)){
+      uint16_t data_1 = SPI2->DR;
+      itoa(data_1,data,10);
+      serial.println(data);
+    }
+    
+    //for(volatile int i = 0; i < 500000; i++){}
   }
 }
