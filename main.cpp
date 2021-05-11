@@ -31,9 +31,7 @@ int main(void) {
   GPIOC->MODER &= ~GPIO_MODER_MODER3;
   GPIOC->MODER |= GPIO_MODER_MODER3_1;
   /* Set PIN to high speed */
-  //GPIOC->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR3_1;
-  /* Set PIN to open drain */
-  GPIOC->OTYPER |= GPIO_OTYPER_OT_3;
+  GPIOC->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR3_1;
   /* Select the specific alternate function */
   GPIOC->AFR[0] |= (5<<12);
 
