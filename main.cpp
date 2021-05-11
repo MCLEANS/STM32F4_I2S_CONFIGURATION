@@ -6,7 +6,7 @@
 custom_libraries::clock_config system_clock;
 custom_libraries::USART serial(USART1,GPIOB,7,6,9600);
 
-uint16_t received_data = 17;
+uint16_t received_data;
 
 int main(void) {
   
@@ -60,7 +60,7 @@ int main(void) {
   SPI2->I2SPR &= ~SPI_I2SPR_I2SDIV;
   SPI2->I2SPR |= 42;
   /* Set odd factor for the I2S prescaler */
-  SPI2->I2SPR &= ~SPI_I2SPR_ODD;
+  SPI2->I2SPR |= SPI_I2SPR_ODD;
   /* Select I2S mode */
   SPI2->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
   /* Set I2S to master receive mode */
@@ -69,20 +69,22 @@ int main(void) {
   SPI2->I2SCFGR |= SPI_I2SCFGR_I2SSTD_0;
   /* Set CPOL to LOW */
   SPI2->I2SCFGR &= ~SPI_I2SCFGR_CKPOL;
-  /* Set data length to 16 bit */
-  SPI2->I2SCFGR &= ~SPI_I2SCFGR_DATLEN;
-  /* set channel length to 16 bits */
+  /* Set data length to 32 bit */
+  SPI2->I2SCFGR &= ~SPI_I2SCFGR_DATLEN_1;
+  /* set channel length to 16 bits (Number of bits per audio channel) */
   SPI2->I2SCFGR &= ~SPI_I2SCFGR_CHLEN;
   /* Enable RX DMA capability */
   SPI2->CR2 |= SPI_CR2_RXDMAEN;
+  /* Enable Master clock output */
+  SPI2->I2SPR |= SPI_I2SPR_MCKOE;
   /* Enable I2S */
   SPI2->I2SCFGR |= SPI_I2SCFGR_I2SE;
 
- // DMA1_Stream3->CR &= ~DMA_SxCR_EN;
+  DMA1_Stream3->CR &= ~DMA_SxCR_EN;
 
   /* Select stream 3 channel 0 of DMA */
- // DMA1_Stream3->CR &= ~DMA_SxCR_CHSEL;
-/*
+  DMA1_Stream3->CR &= ~DMA_SxCR_CHSEL;
+
 	//set Memory data size to 16 bits
 	DMA1_Stream3->CR |= DMA_SxCR_MSIZE_0;
 	//Set peripheral data size to 16 bits
@@ -99,16 +101,18 @@ int main(void) {
 	DMA1_Stream3->M0AR = (uint32_t)(&received_data);
 	//Enable the DMA
 	DMA1_Stream3->CR |= DMA_SxCR_EN;
-*/
+
   /* Initialize USART */
   serial.initialize();
   
   while(1){
-    char data[5];
+    char data[6];
     while(!(SPI2->SR & SPI_SR_RXNE)){}
-    if(!(SPI2->SR & SPI_SR_CHSIDE)){
-      itoa(SPI2->DR,data,10);
-      serial.println(data);
+    itoa(received_data,data,10);
+    serial.println(data);
+   
+    if(SPI2->SR & SPI_SR_UDR){
+      serial.println("Overun error");
     }
   }
 }
