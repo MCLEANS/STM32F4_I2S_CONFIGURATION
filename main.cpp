@@ -29,9 +29,11 @@ int main(void) {
   GPIOB->AFR[1] |= (5<<8);
   /* set I2S data pin to alternate function */
   GPIOC->MODER &= ~GPIO_MODER_MODER3;
-  //GPIOC->MODER |= GPIO_MODER_MODER3_1;
+  GPIOC->MODER |= GPIO_MODER_MODER3_1;
   /* Set PIN to high speed */
   //GPIOC->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR3_1;
+  /* Set PIN to open drain */
+  GPIOC->OTYPER |= GPIO_OTYPER_OT_3;
   /* Select the specific alternate function */
   GPIOC->AFR[0] |= (5<<12);
 
@@ -108,9 +110,7 @@ int main(void) {
     while(!(SPI2->SR & SPI_SR_RXNE)){}
     if(!(SPI2->SR & SPI_SR_CHSIDE)){
       itoa(SPI2->DR,data,10);
-      serial.println("hello world");
+      serial.println(data);
     }
-    
-    //for(volatile int i = 0; i < 500000; i++){}
   }
 }
