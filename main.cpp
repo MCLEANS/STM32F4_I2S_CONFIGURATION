@@ -24,14 +24,14 @@ int main(void) {
   GPIOB->MODER &= ~GPIO_MODER_MODER10;
   GPIOB->MODER |= GPIO_MODER_MODER10_1;
   /* Set GPIO SPEED to very high */
-  GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR10;
+  GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR10_1;
   /* Select specific alternate function */
   GPIOB->AFR[1] |= (5<<8);
   /* set I2S data pin to alternate function */
   GPIOC->MODER &= ~GPIO_MODER_MODER3;
-  GPIOC->MODER |= GPIO_MODER_MODER3_1;
+  //GPIOC->MODER |= GPIO_MODER_MODER3_1;
   /* Set PIN to high speed */
-  GPIOC->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR3;
+  //GPIOC->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR3_1;
   /* Select the specific alternate function */
   GPIOC->AFR[0] |= (5<<12);
 
@@ -78,6 +78,8 @@ int main(void) {
   /* Enable I2S */
   SPI2->I2SCFGR |= SPI_I2SCFGR_I2SE;
 
+ // DMA1_Stream3->CR &= ~DMA_SxCR_EN;
+
   /* Select stream 3 channel 0 of DMA */
  // DMA1_Stream3->CR &= ~DMA_SxCR_CHSEL;
 /*
@@ -105,9 +107,8 @@ int main(void) {
     char data[5];
     while(!(SPI2->SR & SPI_SR_RXNE)){}
     if(!(SPI2->SR & SPI_SR_CHSIDE)){
-      uint16_t data_1 = SPI2->DR;
-      itoa(data_1,data,10);
-      serial.println(data);
+      itoa(SPI2->DR,data,10);
+      serial.println("hello world");
     }
     
     //for(volatile int i = 0; i < 500000; i++){}
