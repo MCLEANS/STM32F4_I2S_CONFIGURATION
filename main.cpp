@@ -1,12 +1,13 @@
 #include "stm32f4xx.h"
 #include "clockconfig.h"
 #include "USART.h"
+
 #include <stdlib.h>
 
 custom_libraries::clock_config system_clock;
 custom_libraries::USART serial(USART1,GPIOB,7,6,9600);
 
-uint16_t received_data;
+uint16_t received_data = 12;
 
 int main(void) {
   
@@ -27,13 +28,15 @@ int main(void) {
   GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR10_1;
   /* Select specific alternate function */
   GPIOB->AFR[1] |= (5<<8);
-  /* set I2S data pin to alternate function */
+  /* set I2S data pin Input (Reset state) */
   GPIOC->MODER &= ~GPIO_MODER_MODER3;
-  GPIOC->MODER |= GPIO_MODER_MODER3_1;
+  /* Set the pin to Input floating */
+  GPIOC->PUPDR &= ~GPIO_PUPDR_PUPDR3;
+  //GPIOC->MODER |= GPIO_MODER_MODER3_1;
   /* Set PIN to high speed */
-  GPIOC->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR3_1;
+  //GPIOC->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR3_1;
   /* Select the specific alternate function */
-  GPIOC->AFR[0] |= (5<<12);
+  //GPIOC->AFR[0] |= (5<<12);
 
   /* PLL clock source automatically set to HSI by Clock configuration driver */
   /* Select I2S clock source to PLLI2S */
@@ -58,7 +61,7 @@ int main(void) {
   SPI2->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
   /* Set the I2S Linear prescaler with a Value of 42 */
   SPI2->I2SPR &= ~SPI_I2SPR_I2SDIV;
-  SPI2->I2SPR |= 42;
+  SPI2->I2SPR |= 272;
   /* Set odd factor for the I2S prescaler */
   SPI2->I2SPR |= SPI_I2SPR_ODD;
   /* Select I2S mode */
@@ -70,21 +73,23 @@ int main(void) {
   /* Set CPOL to LOW */
   SPI2->I2SCFGR &= ~SPI_I2SCFGR_CKPOL;
   /* Set data length to 32 bit */
-  SPI2->I2SCFGR &= ~SPI_I2SCFGR_DATLEN_1;
+  SPI2->I2SCFGR &= ~SPI_I2SCFGR_DATLEN;
   /* set channel length to 16 bits (Number of bits per audio channel) */
-  SPI2->I2SCFGR &= ~SPI_I2SCFGR_CHLEN;
+  SPI2->I2SCFGR |= SPI_I2SCFGR_CHLEN;
   /* Enable RX DMA capability */
-  SPI2->CR2 |= SPI_CR2_RXDMAEN;
+  //SPI2->CR2 |= SPI_CR2_RXDMAEN;
   /* Enable Master clock output */
   SPI2->I2SPR |= SPI_I2SPR_MCKOE;
   /* Enable I2S */
   SPI2->I2SCFGR |= SPI_I2SCFGR_I2SE;
+  SPI2->CR1 |= SPI_CR1_SPE;
+  
 
-  DMA1_Stream3->CR &= ~DMA_SxCR_EN;
+  //DMA1_Stream3->CR &= ~DMA_SxCR_EN;
 
   /* Select stream 3 channel 0 of DMA */
-  DMA1_Stream3->CR &= ~DMA_SxCR_CHSEL;
-
+ // DMA1_Stream3->CR &= ~DMA_SxCR_CHSEL;
+/**
 	//set Memory data size to 16 bits
 	DMA1_Stream3->CR |= DMA_SxCR_MSIZE_0;
 	//Set peripheral data size to 16 bits
@@ -101,14 +106,14 @@ int main(void) {
 	DMA1_Stream3->M0AR = (uint32_t)(&received_data);
 	//Enable the DMA
 	DMA1_Stream3->CR |= DMA_SxCR_EN;
-
+**/
   /* Initialize USART */
   serial.initialize();
   
   while(1){
-    char data[6];
+    char data[32];
     while(!(SPI2->SR & SPI_SR_RXNE)){}
-    itoa(received_data,data,10);
+    itoa(SPI2->DR,data,10);
     serial.println(data);
    
     if(SPI2->SR & SPI_SR_UDR){
