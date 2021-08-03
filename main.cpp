@@ -28,19 +28,16 @@ int main(void) {
   GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR10_1;
   /* Select specific alternate function */
   GPIOB->AFR[1] |= (5<<8);
+
   /* set I2S data pin Input (Reset state) */
   GPIOC->MODER &= ~GPIO_MODER_MODER3;
   /* Set the pin to Input floating */
-  GPIOC->PUPDR &= ~GPIO_PUPDR_PUPDR3;
-  //GPIOC->MODER |= GPIO_MODER_MODER3_1;
-  /* Set PIN to high speed */
-  //GPIOC->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR3_1;
-  /* Select the specific alternate function */
-  //GPIOC->AFR[0] |= (5<<12);
+  GPIOC->PUPDR |= GPIO_PUPDR_PUPDR3_0;
 
   /* PLL clock source automatically set to HSI by Clock configuration driver */
   /* Select I2S clock source to PLLI2S */
   RCC->CFGR &= ~RCC_CFGR_I2SSRC;
+
   /**
    * Configure the I2S Clock frequency
    * PLL I2S Clock output frequency is set at 86MHz
@@ -61,7 +58,7 @@ int main(void) {
   SPI2->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
   /* Set the I2S Linear prescaler with a Value of 42 */
   SPI2->I2SPR &= ~SPI_I2SPR_I2SDIV;
-  SPI2->I2SPR |= 272;
+  SPI2->I2SPR |= 42;
   /* Set odd factor for the I2S prescaler */
   SPI2->I2SPR |= SPI_I2SPR_ODD;
   /* Select I2S mode */
@@ -79,7 +76,7 @@ int main(void) {
   /* Enable RX DMA capability */
   //SPI2->CR2 |= SPI_CR2_RXDMAEN;
   /* Enable Master clock output */
-  SPI2->I2SPR |= SPI_I2SPR_MCKOE;
+ // SPI2->I2SPR |= SPI_I2SPR_MCKOE;
   /* Enable I2S */
   SPI2->I2SCFGR |= SPI_I2SCFGR_I2SE;
   SPI2->CR1 |= SPI_CR1_SPE;
