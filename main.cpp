@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 
+
 custom_libraries::clock_config system_clock;
 custom_libraries::USART serial(USART1,GPIOB,7,6,9600);
 
